@@ -1,0 +1,16 @@
+.venv/
+.vscode/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.db/
+.git/
+.github/
+build/
+dist/
+*.egg-info/
+*.png
+test.py
+*.code-workspace
+*.bat
+.gemini/

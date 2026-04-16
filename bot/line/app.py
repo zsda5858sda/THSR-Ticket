@@ -28,20 +28,18 @@ from linebot.v3.exceptions import InvalidSignatureError
 app = Flask(__name__)
 
 # ============================================================
-# [上雲端前必改] Token & Secret
+# Token & Secret（從環境變數讀取）
 # ============================================================
-CHANNEL_SECRET = "e804a771d183dd46a440f06f3b66920d"
-CHANNEL_ACCESS_TOKEN = "ZKOT/fZ30nFQlVV2iSJyDpMCm/4LhzxnUdez/a91cPXgmE1YTid4zQUj0l2jBChrTnqZeJ9bwBs6mG8SB+rUbQ+WPlcukW0WEjrSIJV/ZHgkQidmrp3IYhexiRl/5QLeVRxtTAUJCLPkVtTNFPYP9wdB04t89/1O/w1cDnyilFU="
-LINE_USER_ID = "Uefe534b61be72ce77c7afa29904d21e4"
+CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
+CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
+LINE_USER_ID = os.environ.get("LINE_USER_ID", "")
 
 # THSR 自動訂票程式路徑（相對於此檔案位置，往上兩層即為專案根目錄）
 THSR_PROJECT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 AUTO_BOOK_SCRIPT = os.path.join(THSR_PROJECT_DIR, "auto_book.py")
 
-# THSR 虛擬環境 Python 路徑（使用專案根目錄的 .venv）
-THSR_PYTHON = os.path.join(THSR_PROJECT_DIR, ".venv", "Scripts", "python.exe")
-if not os.path.exists(THSR_PYTHON):
-    THSR_PYTHON = "python"
+# Python 路徑（雲端環境直接用系統 python）
+THSR_PYTHON = os.environ.get("THSR_PYTHON_PATH", "python")
 
 handler = WebhookHandler(CHANNEL_SECRET)
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
@@ -458,6 +456,14 @@ def _collect_output():
 
 
 # ============================================================
+# Health Check（Render 使用）
+# ============================================================
+@app.route("/", methods=["GET"])
+def health_check():
+    return "OK", 200
+
+
+# ============================================================
 # LINE Webhook
 # ============================================================
 @app.route("/callback", methods=["POST"])
@@ -536,16 +542,8 @@ def api_params():
 
 
 # ============================================================
-# [上雲端前必改] Port & Debug
+# 啟動伺服器
 # ============================================================
 if __name__ == "__main__":
-    from pyngrok import ngrok
-
-    # 啟動 ngrok tunnel
-    public_url = ngrok.connect(5000, "http").public_url
-    print(f"\n{'='*50}")
-    print(f"  ngrok tunnel: {public_url}")
-    print(f"  Webhook URL:  {public_url}/callback")
-    print(f"{'='*50}\n")
-
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
